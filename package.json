@@ -19,7 +19,8 @@
   "homepage": "https://github.com/stefholbrook/university#readme",
   "dependencies": {
     "code": "^4.0.0",
-    "hapi": "^16.0.1"
+    "hapi": "^16.0.1",
+    "hapi-auth-basic": "^4.2.0"
   },
   "devDependencies": {
     "code": "^4.0.0",
