@@ -9,6 +9,7 @@ const Basic = require('hapi-auth-basic');
 const Auth = require('../lib/auth');
 const Path = require('path');
 const Hoek = require('hoek');
+const Config = require('../lib/config');
 
 
 // Declare internals
@@ -50,14 +51,14 @@ describe('/auth', () => {
 
     it('errors on missing hapi-auth-basic plugin', (done) => {
 
-        const manifest = Hoek.clone(internals.manifest);
+        const manifest =  Hoek.clone(internals.manifest);
         manifest.registrations.splice(1, 1);
 
         University.init(manifest, internals.composeOptions, (err, server) => {
 
             expect(err).to.exist();
             expect(err.message).to.equal('Plugin ' + Auth.register.attributes.name + ' missing dependency ' + Basic.register.attributes.pkg.name +
-                                         ' in connection: ' + server.info.uri);
+                                         ' in connection: ' + server.select('web').info.uri);
 
             done();
         });
@@ -68,7 +69,15 @@ describe('/auth', () => {
 internals.manifest = {
     connections: [
         {
-            port: 0
+            host: 'localhost',
+            port: 0,
+            labels: ['web']
+        },
+        {
+            host: 'localhost',
+            port: 0,
+            labels: ['web-tls'],
+            tls: Config.tls
         }
     ],
     registrations: [

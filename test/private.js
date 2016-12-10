@@ -10,6 +10,7 @@ const Auth = require('../lib/auth');
 const Private = require('../lib/private');
 const Path = require('path');
 const Hoek = require('hoek');
+const Config = require('../lib/config');
 
 
 // Declare internals
@@ -27,6 +28,29 @@ const it = lab.test;
 
 describe('/private', () => {
 
+    it('ensures /private is always redirected to use https', (done) => {
+
+        University.init(internals.manifest, internals.composeOptions, (err, server) => {
+
+            expect(err).to.not.exist();
+
+            const web = server.select('web');
+            const webTls = server.select('web-tls');
+
+            const request = {
+                method: 'GET',
+                url: '/private'
+            };
+            web.inject(request, (res) => {
+
+                expect(res.statusCode, 'Status code').to.equal(301);
+                expect(res.headers.location).to.equal(webTls.info.uri + '/private');
+
+                server.stop(done);
+            });
+        });
+    });
+
     it('returns a greeting for the authenticated user', (done) => {
 
         University.init(internals.manifest, internals.composeOptions, (err, server) => {
@@ -41,7 +65,7 @@ describe('/private', () => {
                 }
             };
 
-            server.inject(request, (res) => {
+            server.select('web-tls').inject(request, (res) => {
 
                 expect(res.statusCode, 'Status code').to.equal(200);
                 expect(res.result, 'result').to.equal('<div>Hello foo</div>');
@@ -65,7 +89,7 @@ describe('/private', () => {
                 }
             };
 
-            server.inject(request, (res) => {
+            server.select('web-tls').inject(request, (res) => {
 
                 expect(res.statusCode, 'Status code').to.equal(401);
 
@@ -88,7 +112,7 @@ describe('/private', () => {
                 }
             };
 
-            server.inject(request, (res) => {
+            server.select('web-tls').inject(request, (res) => {
 
                 expect(res.statusCode, 'Status code').to.equal(401);
 
@@ -114,6 +138,21 @@ describe('/private', () => {
         University.init(internals.manifest, internals.composeOptions, (err) => {
 
             expect(err).to.exist();
+
+            done();
+        });
+    });
+
+    it('errors on missing Auth plugin', (done) => {
+
+        const manifest = Hoek.clone(internals.manifest);
+        manifest.registrations.splice(1,1);
+
+        University.init(manifest, internals.composeOptions, (err, server) => {
+
+            expect(err).to.exist();
+            expect(err.message).to.equal('Plugin ' + Private.register.attributes.name + ' missing dependency ' + Auth.register.attributes.name +
+                                         ' in connection: ' + server.select('web').info.uri);
 
             done();
         });
@@ -145,6 +184,15 @@ internals.manifest = {
     connections: [
         {
             port: 0
+            host: 'localhost',
+            port: 0,
+            labels: ['web']
+        },
+        {
+            host: 'localhost',
+            port: 0,
+            labels: ['web-tls'],
+            tls: Config.tls
         }
     ],
     registrations: [
@@ -153,6 +201,10 @@ internals.manifest = {
         },
         {
             plugin: './private'
+            plugin: './private'
+        },
+        {
+            plugin: './auth'
         },
         {
             plugin: 'hapi-auth-basic'

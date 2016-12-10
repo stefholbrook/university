@@ -1,6 +1,6 @@
 {
   "name": "hapi-university",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "Community learning experiment",
   "main": "lib/index.js",
   "repository": {
@@ -24,6 +24,7 @@
     "hapi": "15.x.x",
     "hapi-auth-basic": "4.x.x",
     "hoek": "4.x.x",
+    "inert": "4.x.x",
     "vision": "4.x.x"
   },
   "scripts": {
